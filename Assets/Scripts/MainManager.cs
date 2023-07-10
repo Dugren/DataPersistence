@@ -1,8 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class MainManager : MonoBehaviour
 {
@@ -12,6 +16,8 @@ public class MainManager : MonoBehaviour
 
     public Text ScoreText;
     public GameObject GameOverText;
+    [SerializeField] TextMeshProUGUI nameText;
+    [SerializeField] Text highScoreText;
     
     private bool m_Started = false;
     private int m_Points;
@@ -36,6 +42,8 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        nameText.text = DataStorage.Instance.GetPlayerName();
+        highScoreText.text = $"Highscore: {DataStorage.Instance.GetHighScorePlayerName()} : {DataStorage.Instance.GetHighScore()}";
     }
 
     private void Update()
@@ -65,12 +73,27 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = $"Score: {m_Points}";
     }
 
     public void GameOver()
     {
         m_GameOver = true;
+        if (m_Points >= DataStorage.Instance.GetHighScore())
+        {
+            DataStorage.Instance.SetHighScore(m_Points);
+            DataStorage.Instance.SetHighScorePlayerName(DataStorage.Instance.GetPlayerName());
+        }
         GameOverText.SetActive(true);
+    }
+
+    public void Exit()
+    {
+        DataStorage.Instance.SaveHighScore();
+#if UNITY_EDITOR
+        EditorApplication.ExitPlaymode();
+#else
+        Application.Quit();
+#endif
     }
 }
